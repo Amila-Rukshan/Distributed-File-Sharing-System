@@ -81,12 +81,14 @@ public class BootstrapServer {
                                     if (isOkay) {
                                         if (nodes.size() == 1) {
                                             reply += "1 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort();
+                                            echo("" + nodes.get(0).getPort());
                                         } else if (nodes.size() == 2) {
-                                            reply += "2 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " +
-                                                    nodes.get(1).getIp() + " " + nodes.get(1).getPort();
-                                        } else if (nodes.size() == 3) {
+                                            reply += "2 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " + nodes.get(1).getIp() + " " + nodes.get(1).getPort();
+                                            echo(nodes.get(0).getPort() + " " + nodes.get(1).getPort());
+                                       } else if (nodes.size() == 3) {
                                             reply += "3 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " + nodes.get(1).getIp() + " " + nodes.get(1).getPort() + " " + nodes.get(2).getIp() + " " + nodes.get(2).getPort();
-                                        } else {
+                                            echo(nodes.get(0).getPort() + " " + nodes.get(1).getPort() + " " + nodes.get(2).getPort());
+                                       } else {
                                             Random r = new Random();
                                             int Low = 0;
                                             int High = nodes.size();
@@ -107,8 +109,7 @@ public class BootstrapServer {
                                 DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                                 sock.send(dpReply);
                             }else{
-                                reply += "9996";
-                                reply = String.format("%04d", reply.length() + 5) + " " + reply;
+                                reply = "0015 REGOK 9996";
 
                                 DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                                 sock.send(dpReply);

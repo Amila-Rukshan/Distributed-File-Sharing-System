@@ -11,7 +11,9 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 import java.util.StringTokenizer;
+import java.util.Random;
 
 public class Peer{
 
@@ -20,12 +22,12 @@ public class Peer{
         String s;
         List<Node> peerTable = new ArrayList<Node>();
 
+        List<String> assignedFiles = new ArrayList<>();
+
         String[] possilbeFiles = {"Adventures of Tintin", "Jack and Jill", "Glee", "The Vampire Diarie", "King Arthur",
                 "Windows XP", "Harry Potter", "Kung Fu Panda", "Lady Gaga", "Twilight", "Windows 8", "Mission Impossible",
                 "Turn Up The Music", "Super Mario", "American Pickers", "Microsoft Office 2010", "Happy Feet", "Modern Family",
                 "American Idol", "Hacking for Dummies" };
-
-        List<String> availableFiles = new ArrayList<>();
 
         try{
             // port of the peer
@@ -36,6 +38,18 @@ public class Peer{
 
             sock = new DatagramSocket(port);
             echo("Peer is listening on port : " + sock.getLocalPort());
+
+            // file assigning
+            possilbeFiles = shuffleArray(possilbeFiles);
+            Random rand = new Random();
+            int numFiles = 3 + rand.nextInt(3);
+
+            echo(">> ASSIGNING FILES <<");
+            for(int j = 0; j < numFiles; j++){
+                assignedFiles.add(possilbeFiles[j]);
+                echo(possilbeFiles[j]);
+            }
+            echo(">> FILES ASSIGNED <<");
 
             InetAddress ip = InetAddress.getLocalHost();
 
@@ -80,19 +94,48 @@ public class Peer{
                             if(statusCode != 9999 && statusCode != 9998 && statusCode != 9997 && statusCode != 9996){
                                 // will 0 or 1 or 2 or 3 nodes to its peer table
                                 for(int n = 0; n < statusCode; n++){
-                                    peerTable.add(new Node(st.nextToken(), Integer.parseInt(st.nextToken())));
+                                    String peerIP = st.nextToken();
+                                    int peerPort = Integer.parseInt(st.nextToken());
+                                    peerTable.add(new Node(peerIP, peerPort));
+                                    String joinMsg = "JOIN "+ ip.getHostAddress() + " " + port;
+                                    joinMsg = String.format("%04d", joinMsg.length() + 5) + " " + joinMsg;
+                                    sock.send(new DatagramPacket(joinMsg.getBytes(), joinMsg.getBytes().length, InetAddress.getByName(peerIP), peerPort));
                                 }
                             }
                             echo(String.format("Have %d peer nodes", peerTable.size()));
+                            break;
+                        case "UNROK":
+                            echo("UNROK " + st.nextToken());
                             break;
                         case "ECHO":
                             for (int i=0; i<peerTable.size(); i++) {
                                 echo(peerTable.get(i).getIp() + " " + peerTable.get(i).getPort());
                             }
                             reply = "0012 ECHOK 0";
-                            DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
-                            sock.send(dpReply);
+                            sock.send(new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress(), incoming.getPort()));
                             break;
+                        case "JOIN":
+                            String peerIP = st.nextToken();
+                            int peerPort = Integer.parseInt(st.nextToken());
+                            peerTable.add(new Node(peerIP, peerPort));
+                            reply = "0013 JOINOK 0";
+                            sock.send(new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort()));
+                            break;
+                        case "JOINOK":
+//                            echo(command + " " + st.nextToken());
+                            break;
+                        case "TRIGGER_LEAVE":
+                            echo("READY TO LEAVE");
+                            String leaveMsg = "";
+                            sock.send(new DatagramPacket(leaveMsg.getBytes(), leaveMsg.getBytes().length, , incoming.getPort()));
+                            break;
+                        case "LEAVE":
+
+                            break;
+                        case "LEAVEOK":
+
+                            break;
+
                     }
                  }
              }
@@ -124,6 +167,17 @@ public class Peer{
             i++;
         }
         return ret;
+    }
+
+    public static String[] shuffleArray(String[] arr) {
+        for(int i = 0; i < arr.length; i++){
+            Random rand = new Random();
+            int j = i + rand.nextInt(arr.length-i);
+            String temp = arr[i];
+            arr[i] = arr[j];
+            arr[j] = temp;
+        }
+        return arr;
     }
 
 }
