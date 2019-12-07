@@ -59,6 +59,7 @@ public class Peer{
                  //echo the details of incoming data - client ip : client port - client message
                  echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + s);
 
+                 s.replace("\n", "");
                  StringTokenizer st = new StringTokenizer(s, " ");
 
                  String length = st.nextToken();
@@ -67,6 +68,7 @@ public class Peer{
                  String reply;
 
                  if(Integer.parseInt(length) != s.length()){
+                     echo(s.length()+"");
                      reply = "0015 REGOK 9999";
                      DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                      sock.send(dpReply);
@@ -83,7 +85,13 @@ public class Peer{
                             }
                             echo(String.format("Have %d peer nodes", peerTable.size()));
                             break;
-                        case "":
+                        case "ECHO":
+                            for (int i=0; i<peerTable.size(); i++) {
+                                echo(peerTable.get(i).getIp() + " " + peerTable.get(i).getPort());
+                            }
+                            reply = "0012 ECHOK 0";
+                            DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
+                            sock.send(dpReply);
                             break;
                     }
                  }
@@ -127,6 +135,14 @@ class Node{
     Node(String ip, int port) {
         this.ip = ip;
         this.port = port;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public String getIp() {
+        return ip;
     }
 }
 

@@ -14,7 +14,7 @@ import java.util.StringTokenizer;
 
 public class BootstrapServer {
 
-    public static final int MAX_PEERS = 7;
+    public static final int MAX_PEERS = 30;
 
     public static void main(String args[])
     {
@@ -40,6 +40,7 @@ public class BootstrapServer {
                 //echo the details of incoming data - client ip : client port - client message
                 echo(incoming.getAddress().getHostAddress() + " : " + incoming.getPort() + " - " + s);
 
+                s.replace("\n", "");
                 StringTokenizer st = new StringTokenizer(s, " ");
 
                 String length = st.nextToken();
