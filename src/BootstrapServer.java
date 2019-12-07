@@ -14,7 +14,7 @@ import java.util.StringTokenizer;
 
 public class BootstrapServer {
 
-    public static final int MAX_PEERS = 6;
+    public static final int MAX_PEERS = 7;
 
     public static void main(String args[])
     {
@@ -45,91 +45,104 @@ public class BootstrapServer {
                 String length = st.nextToken();
                 String command = st.nextToken();
 
+                String reply;
 
-                if (command.equals("REG")) {
-                    String reply = "REGOK ";
+                if(Integer.parseInt(length) != s.length()){
+                    reply = "0015 REGOK 9999";
+                    DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
+                    sock.send(dpReply);
+                }else{
+                    switch(command){
+                        case "REG":
+                            reply = "REGOK ";
+                            if(nodes.size() < BootstrapServer.MAX_PEERS) {
+                                String ip = st.nextToken();
+                                int port = Integer.parseInt(st.nextToken());
+                                String username = st.nextToken();
+                                if (nodes.size() == 0) {
+                                    reply += "0";
+                                    nodes.add(new Neighbour(ip, port, username));
+                                } else {
+                                    boolean isOkay = true;
+                                    for (int i = 0; i < nodes.size(); i++) {
+                                        if (nodes.get(i).getPort() == port) {
+                                            if (nodes.get(i).getUsername().equals(username)) {
+                                                // already registered to you
+                                                reply += "9998";
+                                            } else {
+                                                // registered to another user
+                                                reply += "9997";
+                                            }
+                                            isOkay = false;
+                                        }
+                                    }
 
-                    String ip = st.nextToken();
-                    int port = Integer.parseInt(st.nextToken());
-                    String username = st.nextToken();
-                    if (nodes.size() == 0) {
-                        reply += "0";
-                        nodes.add(new Neighbour(ip, port, username));
-                    } else {
-                        boolean isOkay = true;
+                                    if (isOkay) {
+                                        if (nodes.size() == 1) {
+                                            reply += "1 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort();
+                                        } else if (nodes.size() == 2) {
+                                            reply += "2 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " +
+                                                    nodes.get(1).getIp() + " " + nodes.get(1).getPort();
+                                        } else if (nodes.size() == 3) {
+                                            reply += "3 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " + nodes.get(1).getIp() + " " + nodes.get(1).getPort() + " " + nodes.get(2).getIp() + " " + nodes.get(2).getPort();
+                                        } else {
+                                            Random r = new Random();
+                                            int Low = 0;
+                                            int High = nodes.size();
+                                            int random_1 = r.nextInt(High - Low) + Low;
+                                            int random_2 = r.nextInt(High - Low) + Low;
+                                            while (random_1 == random_2) {
+                                                random_2 = r.nextInt(High - Low) + Low;
+                                            }
+                                            echo(nodes.get(random_1).getPort() + " " + nodes.get(random_2).getPort());
+                                            reply += "2 " + nodes.get(random_1).getIp() + " " + nodes.get(random_1).getPort() + " " + nodes.get(random_2).getIp() + " " + nodes.get(random_2).getPort();
+                                        }
+                                        nodes.add(new Neighbour(ip, port, username));
+                                    }
+                                }
 
-                        if(nodes.size() < BootstrapServer.MAX_PEERS){
+                                reply = String.format("%04d", reply.length() + 5) + " " + reply;
+
+                                DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
+                                sock.send(dpReply);
+                            }else{
+                                reply += "9996";
+                                reply = String.format("%04d", reply.length() + 5) + " " + reply;
+
+                                DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
+                                sock.send(dpReply);
+                            }
+                            break;
+                        case "UNREG":
+                            String ip = st.nextToken();
+                            int port = Integer.parseInt(st.nextToken());
+                            String username = st.nextToken();
                             for (int i=0; i<nodes.size(); i++) {
                                 if (nodes.get(i).getPort() == port) {
-                                    if (nodes.get(i).getUsername().equals(username)) {
-                                        // already registered to you
-                                        reply += "9998";
-                                    } else {
-                                        // registered to another user
-                                        reply += "9997";
-                                    }
-                                    isOkay = false;
+                                    nodes.remove(i);
+                                    reply = "0012 UNROK 0";
+                                    DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
+                                    sock.send(dpReply);
                                 }
                             }
-                        }else{
-                            // BS is full
-                            reply += "9996";
-                        }
-
-                        if (isOkay) {
-                            if (nodes.size() == 1) {
-                                reply += "1 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort();
-                            } else if (nodes.size() == 2) {
-                                reply += "2 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " + nodes.get(1).getIp() + " " + nodes.get(1).getPort();
-                            }else if (nodes.size() == 3) {
-                                reply += "3 " + nodes.get(0).getIp() + " " + nodes.get(0).getPort() + " " + nodes.get(1).getIp() + " " + nodes.get(1).getPort() + " " + nodes.get(2).getIp() + " " + nodes.get(2).getPort();
-                            } else {
-                                Random r = new Random();
-                                int Low = 0;
-                                int High = nodes.size();
-                                int random_1 = r.nextInt(High-Low) + Low;
-                                int random_2 = r.nextInt(High-Low) + Low;
-                                while (random_1 == random_2) {
-                                    random_2 = r.nextInt(High-Low) + Low;
-                                }
-                                echo (nodes.get(random_1).getPort() + " " + nodes.get(random_2).getPort());
-                                reply += "2 " + nodes.get(random_1).getIp() + " " + nodes.get(random_1).getPort() + " " + nodes.get(random_2).getIp() + " " + nodes.get(random_2).getPort();
+                            break;
+                        case "ECHO":
+                            for (int i=0; i<nodes.size(); i++) {
+                                echo(nodes.get(i).getIp() + " " + nodes.get(i).getPort() + " " + nodes.get(i).getUsername());
                             }
-                            nodes.add(new Neighbour(ip, port, username));
-                        }
-                    }
-
-                    reply = String.format("%04d", reply.length() + 5) + " " + reply;
-
-                    DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
-                    sock.send(dpReply);
-                } else if (command.equals("UNREG")) {
-                    String ip = st.nextToken();
-                    int port = Integer.parseInt(st.nextToken());
-                    String username = st.nextToken();
-                    for (int i=0; i<nodes.size(); i++) {
-                        if (nodes.get(i).getPort() == port) {
-                            nodes.remove(i);
-                            String reply = "0012 UNROK 0";
+                            reply = "0012 ECHOK 0";
                             DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
                             sock.send(dpReply);
-                        }
+                            break;
                     }
-                } else if (command.equals("ECHO")) {
-                    for (int i=0; i<nodes.size(); i++) {
-                        echo(nodes.get(i).getIp() + " " + nodes.get(i).getPort() + " " + nodes.get(i).getUsername());
-                    }
-                    String reply = "0012 ECHOK 0";
-                    DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
-                    sock.send(dpReply);
                 }
-
             }
         }
 
         catch(IOException e)
         {
             System.err.println("IOException " + e);
+
         }
     }
 

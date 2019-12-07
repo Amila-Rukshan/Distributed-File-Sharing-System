@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -19,7 +18,14 @@ public class Peer{
     public static void main(String args[]){
         DatagramSocket sock = null;
         String s;
-        List<Neighbour> nodes = new ArrayList<Neighbour>();
+        List<Node> peerTable = new ArrayList<Node>();
+
+        String[] possilbeFiles = {"Adventures of Tintin", "Jack and Jill", "Glee", "The Vampire Diarie", "King Arthur",
+                "Windows XP", "Harry Potter", "Kung Fu Panda", "Lady Gaga", "Twilight", "Windows 8", "Mission Impossible",
+                "Turn Up The Music", "Super Mario", "American Pickers", "Microsoft Office 2010", "Happy Feet", "Modern Family",
+                "American Idol", "Hacking for Dummies" };
+
+        List<String> availableFiles = new ArrayList<>();
 
         try{
             // port of the peer
@@ -33,6 +39,7 @@ public class Peer{
 
             InetAddress ip = InetAddress.getLocalHost();
 
+            // try to register the node at the BS
             String msg = String.format(" REG %s %d %s", ip.getHostAddress(), port, username);
             int msgLength = msg.length() + 4;
             msg = String.format("%04d", msgLength) + msg;
@@ -40,8 +47,6 @@ public class Peer{
 
             DatagramPacket request = new DatagramPacket(data, data.length, ip, 55555);
             sock.send(request);
-
-
 
              while(true){
                  byte[] buffer = new byte[65536]; // 64 KB message size
@@ -59,10 +64,29 @@ public class Peer{
                  String length = st.nextToken();
                  String command = st.nextToken();
 
-                 if(command == "REGOK"){
+                 String reply;
 
+                 if(Integer.parseInt(length) != s.length()){
+                     reply = "0015 REGOK 9999";
+                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
+                     sock.send(dpReply);
+                 }else {
+                    int statusCode;
+                    switch(command){
+                        case "REGOK":
+                            statusCode = Integer.parseInt(st.nextToken());
+                            if(statusCode != 9999 && statusCode != 9998 && statusCode != 9997 && statusCode != 9996){
+                                // will 0 or 1 or 2 or 3 nodes to its peer table
+                                for(int n = 0; n < statusCode; n++){
+                                    peerTable.add(new Node(st.nextToken(), Integer.parseInt(st.nextToken())));
+                                }
+                            }
+                            echo(String.format("Have %d peer nodes", peerTable.size()));
+                            break;
+                        case "":
+                            break;
+                    }
                  }
-
              }
 
 
@@ -94,6 +118,16 @@ public class Peer{
         return ret;
     }
 
+}
+
+class Node{
+    private String ip;
+    private int port;
+
+    Node(String ip, int port) {
+        this.ip = ip;
+        this.port = port;
+    }
 }
 
 
