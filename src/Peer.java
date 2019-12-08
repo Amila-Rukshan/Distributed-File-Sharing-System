@@ -56,6 +56,7 @@ public class Peer{
 
             InetAddress ip = InetAddress.getLocalHost();
             InetAddress bsIP = InetAddress.getByName("127.0.1.1");
+            int bsPort = 55555;
 
             // try to register the node at the BS
             String msg = String.format(" REG %s %d %s", ip.getHostAddress(), port, username);
@@ -173,11 +174,32 @@ public class Peer{
                             int hops = Integer.parseInt(st.nextToken());
                             searchQuery = searchQuery.substring(1, searchQuery.length()-1).toLowerCase();
                             echo("Need to search : " + searchQuery + ", hops : " + hops);
-                            ArrayList<String> arr = search(searchQuery);
-                            echo(arr.size() + " MATCHES FOUND");
 
+                            if(hops > 0){
+                                ArrayList<String> arr = search(searchQuery);
+                                echo(arr.size() + " MATCHES FOUND");
+                                hops--;
+                                if(arr.size() == 0){
+                                    for(int j = 0; j < peerTable.size(); j++){
+                                        String searchMsg = "SER " + peerTable.get(j).getIp() + " " + peerTable.get(j).getPort() + " \"" + searchQuery + "\" " + hops;
+                                        searchMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
+                                        echo(searchMsg);
+                                        Thread.sleep(1000);
+                                        sock.send(new DatagramPacket(searchMsg.getBytes(), searchMsg.getBytes().length, InetAddress.getByName(peerTable.get(j).getIp()), peerTable.get(j).getPort()));
+                                    }
+                                }else if(arr.size() > 0){
+                                    String serReply = "SEROK " + arr.size() + " " + ip.getHostAddress() + " " + port;
+                                    for(String file : arr){
+                                        serReply += " " + "\"" + file + "\"";
+                                    }
+                                    serReply = String.format("%04d", serReply.length() + 5) + " " + serReply;
+                                    sock.send(new DatagramPacket(serReply.getBytes(), serReply.getBytes().length, bsIP, bsPort));
+                                }
+                            }else{
+                                echo("HOPS COUNT REACHED 0");
+                            }
                             break;
-                        case "SEROK":
+                        case "DOWNLOAD":
 
                             break;
                     }
@@ -187,6 +209,8 @@ public class Peer{
 
         }catch(IOException e){
             System.err.println("IOException " + e);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
     }

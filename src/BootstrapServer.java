@@ -7,6 +7,7 @@
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -49,6 +50,7 @@ public class BootstrapServer {
                 String reply;
 
                 if(Integer.parseInt(length) != s.length()){
+                    echo("Expected length : " + s.length() + ", Found: " + length);
                     reply = "0015 REGOK 9999";
                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                     sock.send(dpReply);
@@ -135,6 +137,39 @@ public class BootstrapServer {
                             reply = "0012 ECHOK 0";
                             DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
                             sock.send(dpReply);
+                            break;
+//                        case "SER":
+//                            Random random = new Random();
+//                            // select a random node to start searching
+//                            int Low = 0;
+//                            int High = nodes.size();
+//                            int rand = random.nextInt(High - Low) + Low;
+//
+//                            String next = st.nextToken();
+//                            String searchQuery = next;
+//                            while(next.charAt(next.length()-1) != '"'){
+//                                next = st.nextToken();
+//                                searchQuery += " " + next;
+//                            }
+//                            int hops = Integer.parseInt(st.nextToken());
+//
+//                            String searchMsg = "SER " + nodes.get(rand).getIp() + " " + nodes.get(rand).getPort() + " \"" + searchQuery + "\" " + hops;
+//                            searchMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
+//                            sock.send(new DatagramPacket(searchMsg.getBytes(), searchMsg.getBytes().length, InetAddress.getByName(nodes.get(rand).getIp()), nodes.get(rand).getPort()));
+//                            break;
+                        case "SEROK":
+                            int file_count = Integer.parseInt(st.nextToken());
+                            String ipInCmd = st.nextToken();
+                            String portInCmd = st.nextToken();
+                            for(int k = 0; k < file_count; k++){
+                                String next = st.nextToken();
+                                String searchQuery = next;
+                                while(next.charAt(next.length()-1) != '"'){
+                                    next = st.nextToken();
+                                    searchQuery += " " + next;
+                                }
+//                                downloadMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
+                            }
                             break;
                     }
                 }
