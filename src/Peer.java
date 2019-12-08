@@ -6,6 +6,7 @@
  */
 
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -17,12 +18,14 @@ import java.util.Random;
 
 public class Peer{
 
+    public static List<String> assignedFiles;
+
     public static void main(String args[]){
         DatagramSocket sock = null;
         String s;
         List<Node> peerTable = new ArrayList<Node>();
 
-        List<String> assignedFiles = new ArrayList<>();
+        assignedFiles = new ArrayList<>();
 
         String[] possilbeFiles = {"Adventures of Tintin", "Jack and Jill", "Glee", "The Vampire Diarie", "King Arthur",
                 "Windows XP", "Harry Potter", "Kung Fu Panda", "Lady Gaga", "Twilight", "Windows 8", "Mission Impossible",
@@ -52,6 +55,7 @@ public class Peer{
             echo(">> FILES ASSIGNED <<");
 
             InetAddress ip = InetAddress.getLocalHost();
+            InetAddress bsIP = InetAddress.getByName("127.0.1.1");
 
             // try to register the node at the BS
             String msg = String.format(" REG %s %d %s", ip.getHostAddress(), port, username);
@@ -59,7 +63,7 @@ public class Peer{
             msg = String.format("%04d", msgLength) + msg;
             byte[] data = msg.getBytes();
 
-            DatagramPacket request = new DatagramPacket(data, data.length, ip, 55555);
+            DatagramPacket request = new DatagramPacket(data, data.length, bsIP, 55555);
             sock.send(request);
 
              while(true){
@@ -82,7 +86,7 @@ public class Peer{
                  String reply;
 
                  if(Integer.parseInt(length) != s.length()){
-                     echo(s.length()+"");
+                     echo("Expected length : " + s.length() + ", Found: " + length);
                      reply = "0015 REGOK 9999";
                      DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                      sock.send(dpReply);
@@ -104,9 +108,6 @@ public class Peer{
                             }
                             echo(String.format("Have %d peer nodes", peerTable.size()));
                             break;
-                        case "UNROK":
-                            echo("UNROK " + st.nextToken());
-                            break;
                         case "ECHO":
                             for (int i=0; i<peerTable.size(); i++) {
                                 echo(peerTable.get(i).getIp() + " " + peerTable.get(i).getPort());
@@ -126,16 +127,59 @@ public class Peer{
                             break;
                         case "TRIGGER_LEAVE":
                             echo("READY TO LEAVE");
-                            String leaveMsg = "";
-                            sock.send(new DatagramPacket(leaveMsg.getBytes(), leaveMsg.getBytes().length, , incoming.getPort()));
+                            // unregister the peer itself from the bootstrap server
+                            String unregMsg = "UNREG "+ ip.getHostAddress() + " " + port;
+                            unregMsg = String.format("%04d", unregMsg.length() + 5) + " " + unregMsg;
+                            sock.send(new DatagramPacket(unregMsg.getBytes(), unregMsg.getBytes().length, bsIP, 55555));
+
+                            // when unreg ok receives we are ready to send leave msgs to neighbour peers to
+                            break;
+                        case "UNROK":
+                            echo("UNROK " + st.nextToken());
+                            // TODO:  need to check st.nextToken is 0 or 9999
+                            String leaveMsg = "LEAVE "+ ip.getHostAddress() + " " + port;
+                            leaveMsg = leaveMsg.format("%04d", leaveMsg.length() + 5) + " " + leaveMsg;
+                            for(int j = 0; j < peerTable.size(); j++){
+                                // sending the leave msg
+                                sock.send(new DatagramPacket(leaveMsg.getBytes(), leaveMsg.getBytes().length, InetAddress.getByName(peerTable.get(j).getIp()), peerTable.get(j).getPort()));
+                            }
                             break;
                         case "LEAVE":
+                            String toRemoveIP = st.nextToken();
+                            int toRemovePort = Integer.parseInt(st.nextToken());
+                            echo("GOT LEAVE MSG FROM " + toRemoveIP + " " + toRemovePort);
 
+                            for(int j = 0; j < peerTable.size(); j++){
+                                if(peerTable.get(j).getIp().equals(toRemoveIP) && peerTable.get(j).getPort() == toRemovePort){
+                                    peerTable.remove(j);
+                                    echo("PEER NODE REMOVED: " + toRemoveIP + " " + toRemovePort);
+                                    String leaveOK = "0014 LEAVEOK 0";
+                                    sock.send(new DatagramPacket(leaveOK.getBytes(), leaveOK.getBytes().length, incoming.getAddress(), incoming.getPort()));
+                                }
+                            }
                             break;
                         case "LEAVEOK":
+//                            echo("LEAVEOK " + st.nextToken());
+                            break;
+                        case "SER":
+                            String ipInCmd = st.nextToken();
+                            String portInCmd = st.nextToken();
+                            String next = st.nextToken();
+                            String searchQuery = next;
+                            while(next.charAt(next.length()-1) != '"'){
+                                next = st.nextToken();
+                                searchQuery += " " + next;
+                            }
+                            int hops = Integer.parseInt(st.nextToken());
+                            searchQuery = searchQuery.substring(1, searchQuery.length()-1).toLowerCase();
+                            echo("Need to search : " + searchQuery + ", hops : " + hops);
+                            ArrayList<String> arr = search(searchQuery);
+                            echo(arr.size() + " MATCHES FOUND");
 
                             break;
+                        case "SEROK":
 
+                            break;
                     }
                  }
              }
@@ -151,6 +195,19 @@ public class Peer{
     public static void echo(String msg)
     {
         System.out.println(msg);
+    }
+
+    public static ArrayList<String> search(String query){
+        ArrayList<String> arr = new ArrayList();
+        for(String s : assignedFiles){
+            String[] tokens = s.split("\\s");
+            for(String t : tokens){
+                if(query.equals(t.toLowerCase())){
+                    arr.add(s);
+                }
+            }
+        }
+        return arr;
     }
 
     // A utility method to convert the byte array

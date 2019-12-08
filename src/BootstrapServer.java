@@ -118,10 +118,10 @@ public class BootstrapServer {
                         case "UNREG":
                             String ip = st.nextToken();
                             int port = Integer.parseInt(st.nextToken());
-                            String username = st.nextToken();
                             for (int i=0; i<nodes.size(); i++) {
-                                if (nodes.get(i).getPort() == port) {
+                                if (nodes.get(i).getIp().equals(ip) && nodes.get(i).getPort() == port) {
                                     nodes.remove(i);
+                                    echo("SUCCESSFULLY UNREGISTERED NODE : " + ip + " " + port);
                                     reply = "0012 UNROK 0";
                                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
                                     sock.send(dpReply);

@@ -1,6 +1,7 @@
 
 #start bootstrap server
-#kill $(lsof -t -i:55555);
+kill $(lsof -t -i:55555);
+sleep 1
 xterm -e javac BootstrapServer.java; java BootstrapServer &
 sleep 2
 

@@ -13,3 +13,24 @@ port=57000
 #    sleep 1
 #  done
 #done
+
+
+#echo -n "0018 TRIGGER_LEAVE" | nc -u 127.0.1.1 57000
+
+#echo -n "0024 SER 127.0.1.1 57000 "" 3" | nc -u 127.0.1.1 57000
+#length SER IP port file_name hops
+
+echo -n "0047 SER 127.0.1.1 57000 \"Twilight\" 3" | nc -u 127.0.1.1 57000
+
+
+
+
+
+
+
+
+
+
+
+
+
