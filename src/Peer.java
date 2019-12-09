@@ -48,7 +48,7 @@ public class Peer{
             echo("Peer is listening on port : " + sock.getLocalPort());
 
             // tcp connection
-
+            server = new ServerSocket(port);
 
             // file assigning
             possilbeFiles = shuffleArray(possilbeFiles);
@@ -247,11 +247,14 @@ public class Peer{
                                 public void run() {
                                     echo("BEFORE FILE SEND");
                                     try {
-                                        server = new ServerSocket(port);
+
                                         Socket sr = server.accept();
                                         OutputStream os = sr.getOutputStream();
                                         os.write(bytes, 0, bytes.length);
                                         echo("FILE SENT");
+
+                                        // close the socket
+                                        sr.close();
                                     } catch (IOException e) {
                                         e.printStackTrace();
                                     }
@@ -260,10 +263,11 @@ public class Peer{
 
                             t.start();
 
-
+                            echo("DOWNLOAD READY ACK SENT");
                             // send udp ack to accept the tcp sent file
-//                            String download_ok_msg = "0012 DWNLDOK";
-//                            sock.send(new DatagramPacket(download_ok_msg.getBytes(), download_ok_msg.getBytes().length, bsIP, bsPort));
+                            String download_ok_msg = "DWNLDOK " + ip.getHostAddress() + " " + port;
+                            download_ok_msg = String.format("%04d", download_ok_msg.length() + 5) + " " + download_ok_msg;
+                            sock.send(new DatagramPacket(download_ok_msg.getBytes(), download_ok_msg.getBytes().length, bsIP, bsPort));
 
                             break;
                     }

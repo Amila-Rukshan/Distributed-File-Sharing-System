@@ -180,17 +180,19 @@ public class BootstrapServer {
                             downloadMsg = String.format("%04d", downloadMsg.length() + 5) + " " + downloadMsg;
                             sock.send(new DatagramPacket(downloadMsg.getBytes(), downloadMsg.getBytes().length, InetAddress.getByName(ipInCmd), Integer.parseInt(portInCmd)));
 
-                            byte[] bytes = new byte[1024*1024];
+                            break;
+                        case "DWNLDOK":
+
+                            ipInCmd = st.nextToken();
+                            portInCmd = st.nextToken();
                             Socket sr = new Socket(ipInCmd, Integer.parseInt(portInCmd));
+
+                            byte[] bytes = new byte[1024*1024]; // Maximum 10MB byte array
                             InputStream is = sr.getInputStream();
                             FileOutputStream fr = new FileOutputStream("./receiving_file.txt");
                             is.read(bytes, 0, bytes.length);
                             fr.write(bytes, 0, bytes.length);
                             echo("FILE RECEIVED");
-
-                            break;
-                        case "DWNLDOK":
-
                             break;
                     }
                 }
