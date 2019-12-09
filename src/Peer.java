@@ -5,11 +5,8 @@
  *
  */
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.Socket;
+import java.io.*;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -20,8 +17,11 @@ public class Peer{
 
     public static List<String> assignedFiles;
 
+    public static ServerSocket server = null;
+
     public static void main(String args[]){
         DatagramSocket sock = null;
+
         String s;
         List<Node> peerTable = new ArrayList<Node>();
 
@@ -48,7 +48,7 @@ public class Peer{
             echo("Peer is listening on port : " + sock.getLocalPort());
 
             // tcp connection
-//            Socket sr = new Socket(bsIP, port);
+
 
             // file assigning
             possilbeFiles = shuffleArray(possilbeFiles);
@@ -238,6 +238,32 @@ public class Peer{
                             } catch (Exception e) {
                                 e.printStackTrace();
                             }
+
+
+                            FileOutputStream fr = new FileOutputStream("./sending_file.txt");
+                            fr.write(bytes, 0, bytes.length);
+
+                            Thread t = new Thread() {
+                                public void run() {
+                                    echo("BEFORE FILE SEND");
+                                    try {
+                                        server = new ServerSocket(port);
+                                        Socket sr = server.accept();
+                                        OutputStream os = sr.getOutputStream();
+                                        os.write(bytes, 0, bytes.length);
+                                        echo("FILE SENT");
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+                                }
+                            };
+
+                            t.start();
+
+
+                            // send udp ack to accept the tcp sent file
+//                            String download_ok_msg = "0012 DWNLDOK";
+//                            sock.send(new DatagramPacket(download_ok_msg.getBytes(), download_ok_msg.getBytes().length, bsIP, bsPort));
 
                             break;
                     }

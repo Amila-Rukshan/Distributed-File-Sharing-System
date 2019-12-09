@@ -25,7 +25,7 @@ echo -n "0036 SER 127.0.1.1 57000 \"windows\" 2" | nc -u 127.0.1.1 57003
 
 
 
-
+echo -n "0036 DOWNLOAD_TRIGGER 127.0.1.1 57000 \"filename\" 2" | nc -u 127.0.1.1 55555
 
 
 

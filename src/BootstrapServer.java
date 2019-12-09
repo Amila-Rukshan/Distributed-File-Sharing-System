@@ -4,7 +4,9 @@
  *
  */
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -58,6 +60,10 @@ public class BootstrapServer {
                     DatagramPacket dpReply = new DatagramPacket(reply.getBytes(), reply.getBytes().length, incoming.getAddress(), incoming.getPort());
                     sock.send(dpReply);
                 }else{
+
+                    String ipInCmd = "";
+                    String portInCmd = "";
+
                     switch(command){
                         case "REG":
                             reply = "REGOK ";
@@ -144,8 +150,8 @@ public class BootstrapServer {
 
                         case "SEROK":
                             int file_count = Integer.parseInt(st.nextToken());
-                            String ipInCmd = st.nextToken();
-                            String portInCmd = st.nextToken();
+                            ipInCmd = st.nextToken();
+                            portInCmd = st.nextToken();
                             for(int k = 0; k < file_count; k++){
                                 String next = st.nextToken();
                                 String searchQuery = next;
@@ -155,7 +161,36 @@ public class BootstrapServer {
                                 }
 //                                secureSock
 //                                downloadMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
+
                             }
+                            break;
+                        case "DOWNLOAD_TRIGGER":
+                            ipInCmd = st.nextToken();
+                            portInCmd = st.nextToken();
+
+                            String n = st.nextToken();
+                            String name = n;
+                            while(n.charAt(n.length()-1) != '"'){
+                                n = st.nextToken();
+                                name += " " + n;
+                            }
+
+                            // send download msg
+                            String downloadMsg = "DOWNLOAD " + ipInCmd + " " + portInCmd + "\" " + name + "\"";
+                            downloadMsg = String.format("%04d", downloadMsg.length() + 5) + " " + downloadMsg;
+                            sock.send(new DatagramPacket(downloadMsg.getBytes(), downloadMsg.getBytes().length, InetAddress.getByName(ipInCmd), Integer.parseInt(portInCmd)));
+
+                            byte[] bytes = new byte[1024*1024];
+                            Socket sr = new Socket(ipInCmd, Integer.parseInt(portInCmd));
+                            InputStream is = sr.getInputStream();
+                            FileOutputStream fr = new FileOutputStream("./receiving_file.txt");
+                            is.read(bytes, 0, bytes.length);
+                            fr.write(bytes, 0, bytes.length);
+                            echo("FILE RECEIVED");
+
+                            break;
+                        case "DWNLDOK":
+
                             break;
                     }
                 }
