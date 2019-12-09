@@ -6,15 +6,15 @@
  */
 
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.StringTokenizer;
-import java.util.Random;
+import java.security.MessageDigest;
 
 public class Peer{
 
@@ -39,8 +39,16 @@ public class Peer{
             // username of the peer
             String username = args[1];
 
+            InetAddress ip = InetAddress.getLocalHost();
+            InetAddress bsIP = InetAddress.getByName("127.0.1.1");
+            int bsPort = 55555;
+
+            // udp socket
             sock = new DatagramSocket(port);
             echo("Peer is listening on port : " + sock.getLocalPort());
+
+            // tcp connection
+//            Socket sr = new Socket(bsIP, port);
 
             // file assigning
             possilbeFiles = shuffleArray(possilbeFiles);
@@ -54,9 +62,7 @@ public class Peer{
             }
             echo(">> FILES ASSIGNED <<");
 
-            InetAddress ip = InetAddress.getLocalHost();
-            InetAddress bsIP = InetAddress.getByName("127.0.1.1");
-            int bsPort = 55555;
+
 
             // try to register the node at the BS
             String msg = String.format(" REG %s %d %s", ip.getHostAddress(), port, username);
@@ -181,11 +187,14 @@ public class Peer{
                                 hops--;
                                 if(arr.size() == 0){
                                     for(int j = 0; j < peerTable.size(); j++){
-                                        String searchMsg = "SER " + peerTable.get(j).getIp() + " " + peerTable.get(j).getPort() + " \"" + searchQuery + "\" " + hops;
-                                        searchMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
-                                        echo(searchMsg);
-                                        Thread.sleep(1000);
-                                        sock.send(new DatagramPacket(searchMsg.getBytes(), searchMsg.getBytes().length, InetAddress.getByName(peerTable.get(j).getIp()), peerTable.get(j).getPort()));
+                                        // search except the incoming node
+                                        if(peerTable.get(j).getIp() != incoming.getAddress().getHostName() && peerTable.get(j).getPort() != incoming.getPort()){
+                                            String searchMsg = "SER " + peerTable.get(j).getIp() + " " + peerTable.get(j).getPort() + " \"" + searchQuery + "\" " + hops;
+                                            searchMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
+                                            echo(searchMsg);
+                                            Thread.sleep(1000);
+                                            sock.send(new DatagramPacket(searchMsg.getBytes(), searchMsg.getBytes().length, InetAddress.getByName(peerTable.get(j).getIp()), peerTable.get(j).getPort()));
+                                        }
                                     }
                                 }else if(arr.size() > 0){
                                     String serReply = "SEROK " + arr.size() + " " + ip.getHostAddress() + " " + port;
@@ -200,6 +209,35 @@ public class Peer{
                             }
                             break;
                         case "DOWNLOAD":
+
+                            String n = st.nextToken();
+                            String name = n;
+                            while(n.charAt(n.length()-1) != '"'){
+                                n = st.nextToken();
+                                name += " " + n;
+                            }
+
+                            Random r = new Random();
+                            int x = 1 + r.nextInt(10);
+                            byte[] bytes = new byte[x*1024*1024]; // x MB size byte array
+                            r.nextBytes(bytes);
+                            String digest;
+                            try {
+                                MessageDigest md = MessageDigest.getInstance("MD5");
+                                byte[] hash = md.digest(bytes);
+
+                                //converting byte array to Hexadecimal String
+                                StringBuilder sb = new StringBuilder(2*hash.length);
+                                for(byte b : hash){
+                                    sb.append(String.format("%02x", b&0xff));
+                                }
+                                digest = sb.toString();
+
+                                echo(name + " : " + x + "MB : " + digest);
+
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            }
 
                             break;
                     }

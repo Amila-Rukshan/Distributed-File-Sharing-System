@@ -5,9 +5,7 @@
  */
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -20,12 +18,17 @@ public class BootstrapServer {
     public static void main(String args[])
     {
         DatagramSocket sock = null;
+        ServerSocket ss = null;
         String s;
         List<Neighbour> nodes = new ArrayList<Neighbour>();
 
         try
-        {
+        {   // udp socket
             sock = new DatagramSocket(55555);
+
+            // tcp socket
+//            ss = new ServerSocket(55555);
+//            Socket sr = ss.accept();
 
             echo("Bootstrap Server is listening on port : " + sock.getLocalPort());
 
@@ -138,25 +141,7 @@ public class BootstrapServer {
                             DatagramPacket dpReply = new DatagramPacket(reply.getBytes() , reply.getBytes().length , incoming.getAddress() , incoming.getPort());
                             sock.send(dpReply);
                             break;
-//                        case "SER":
-//                            Random random = new Random();
-//                            // select a random node to start searching
-//                            int Low = 0;
-//                            int High = nodes.size();
-//                            int rand = random.nextInt(High - Low) + Low;
-//
-//                            String next = st.nextToken();
-//                            String searchQuery = next;
-//                            while(next.charAt(next.length()-1) != '"'){
-//                                next = st.nextToken();
-//                                searchQuery += " " + next;
-//                            }
-//                            int hops = Integer.parseInt(st.nextToken());
-//
-//                            String searchMsg = "SER " + nodes.get(rand).getIp() + " " + nodes.get(rand).getPort() + " \"" + searchQuery + "\" " + hops;
-//                            searchMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
-//                            sock.send(new DatagramPacket(searchMsg.getBytes(), searchMsg.getBytes().length, InetAddress.getByName(nodes.get(rand).getIp()), nodes.get(rand).getPort()));
-//                            break;
+
                         case "SEROK":
                             int file_count = Integer.parseInt(st.nextToken());
                             String ipInCmd = st.nextToken();
@@ -168,6 +153,7 @@ public class BootstrapServer {
                                     next = st.nextToken();
                                     searchQuery += " " + next;
                                 }
+//                                secureSock
 //                                downloadMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
                             }
                             break;
