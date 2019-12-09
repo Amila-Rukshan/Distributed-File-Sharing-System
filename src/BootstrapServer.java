@@ -8,10 +8,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
+import java.sql.Time;
+import java.util.*;
 
 public class BootstrapServer {
 
@@ -176,20 +174,27 @@ public class BootstrapServer {
                             }
 
                             // send download msg
-                            String downloadMsg = "DOWNLOAD " + ipInCmd + " " + portInCmd + "\" " + name + "\"";
+                            String downloadMsg = "DOWNLOAD " + ipInCmd + " " + portInCmd + " " + name;
                             downloadMsg = String.format("%04d", downloadMsg.length() + 5) + " " + downloadMsg;
                             sock.send(new DatagramPacket(downloadMsg.getBytes(), downloadMsg.getBytes().length, InetAddress.getByName(ipInCmd), Integer.parseInt(portInCmd)));
 
                             break;
                         case "DWNLDOK":
-
                             ipInCmd = st.nextToken();
                             portInCmd = st.nextToken();
                             Socket sr = new Socket(ipInCmd, Integer.parseInt(portInCmd));
 
-                            byte[] bytes = new byte[1024*1024]; // Maximum 10MB byte array
+                            String n2 = st.nextToken();
+                            String name2 = n2;
+                            while(n2.charAt(n2.length()-1) != '"'){
+                                n2 = st.nextToken();
+                                name2 += " " + n2;
+                            }
+
                             InputStream is = sr.getInputStream();
-                            FileOutputStream fr = new FileOutputStream("./receiving_file.txt");
+                            byte[] bytes = new byte[10*1024*1024];
+                            FileOutputStream fr = new FileOutputStream("./receive_" + name2.substring(1, name2.length()-1) + "_" + new Date().getTime() + ".mp3");
+
                             is.read(bytes, 0, bytes.length);
                             fr.write(bytes, 0, bytes.length);
                             echo("FILE RECEIVED");

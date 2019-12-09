@@ -7,10 +7,7 @@
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
-import java.util.StringTokenizer;
+import java.util.*;
 import java.security.MessageDigest;
 
 public class Peer{
@@ -150,6 +147,9 @@ public class Peer{
                                 // sending the leave msg
                                 sock.send(new DatagramPacket(leaveMsg.getBytes(), leaveMsg.getBytes().length, InetAddress.getByName(peerTable.get(j).getIp()), peerTable.get(j).getPort()));
                             }
+
+                            // safely exit
+                            System.exit(0);
                             break;
                         case "LEAVE":
                             String toRemoveIP = st.nextToken();
@@ -209,6 +209,8 @@ public class Peer{
                             }
                             break;
                         case "DOWNLOAD":
+                            ipInCmd = st.nextToken();
+                            portInCmd = st.nextToken();
 
                             String n = st.nextToken();
                             String name = n;
@@ -217,58 +219,64 @@ public class Peer{
                                 name += " " + n;
                             }
 
-                            Random r = new Random();
-                            int x = 1 + r.nextInt(10);
-                            byte[] bytes = new byte[x*1024*1024]; // x MB size byte array
-                            r.nextBytes(bytes);
-                            String digest;
-                            try {
-                                MessageDigest md = MessageDigest.getInstance("MD5");
-                                byte[] hash = md.digest(bytes);
+                            if(assignedFiles.contains(name.substring(1, name.length()-1))){
+                                Random r = new Random();
+                                int x = 1 + r.nextInt(10);
+                                byte[] bytes = new byte[x*1024*1024]; // x MB size byte array
+                                r.nextBytes(bytes);
+                                String digest;
+                                try {
+                                    MessageDigest md = MessageDigest.getInstance("MD5");
+                                    byte[] hash = md.digest(bytes);
 
-                                //converting byte array to Hexadecimal String
-                                StringBuilder sb = new StringBuilder(2*hash.length);
-                                for(byte b : hash){
-                                    sb.append(String.format("%02x", b&0xff));
-                                }
-                                digest = sb.toString();
-
-                                echo(name + " : " + x + "MB : " + digest);
-
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-
-
-                            FileOutputStream fr = new FileOutputStream("./sending_file.txt");
-                            fr.write(bytes, 0, bytes.length);
-
-                            Thread t = new Thread() {
-                                public void run() {
-                                    echo("BEFORE FILE SEND");
-                                    try {
-
-                                        Socket sr = server.accept();
-                                        OutputStream os = sr.getOutputStream();
-                                        os.write(bytes, 0, bytes.length);
-                                        echo("FILE SENT");
-
-                                        // close the socket
-                                        sr.close();
-                                    } catch (IOException e) {
-                                        e.printStackTrace();
+                                    //converting byte array to Hexadecimal String
+                                    StringBuilder sb = new StringBuilder(2*hash.length);
+                                    for(byte b : hash){
+                                        sb.append(String.format("%02x", b&0xff));
                                     }
+                                    digest = sb.toString();
+
+                                    echo(name + " : " + x + "MB : " + digest);
+
+                                } catch (Exception e) {
+                                    e.printStackTrace();
                                 }
-                            };
 
-                            t.start();
+                                FileOutputStream fr = new FileOutputStream("./send_" + name.substring(1, name.length()-1) +  "_" + new Date().getTime()+".mp3");
+                                fr.write(bytes, 0, bytes.length);
 
-                            echo("DOWNLOAD READY ACK SENT");
-                            // send udp ack to accept the tcp sent file
-                            String download_ok_msg = "DWNLDOK " + ip.getHostAddress() + " " + port;
-                            download_ok_msg = String.format("%04d", download_ok_msg.length() + 5) + " " + download_ok_msg;
-                            sock.send(new DatagramPacket(download_ok_msg.getBytes(), download_ok_msg.getBytes().length, bsIP, bsPort));
+                                Thread t = new Thread() {
+                                    public void run() {
+                                        echo("BEFORE FILE SEND");
+                                        try {
 
+                                            Socket sr = server.accept();
+                                            OutputStream os = sr.getOutputStream();
+                                            os.write(bytes, 0, bytes.length);
+                                            echo("FILE SENT");
+
+                                            // close the socket
+                                            if(!sr.isClosed()){
+                                                sr.close();
+                                            }
+                                        } catch (IOException e) {
+//                                        e.printStackTrace();
+                                        }
+                                    }
+                                };
+
+
+                                t.start();
+                                Thread.sleep(1000);
+
+                                echo("DOWNLOAD READY ACK SENT");
+                                // send udp ack to accept the tcp sent file
+                                String download_ok_msg = "DWNLDOK " + ip.getHostAddress() + " " + port + " " + name;
+                                download_ok_msg = String.format("%04d", download_ok_msg.length() + 5) + " " + download_ok_msg;
+                                sock.send(new DatagramPacket(download_ok_msg.getBytes(), download_ok_msg.getBytes().length, bsIP, bsPort));
+                            }else{
+                                echo("FILE NOT FOUND");
+                            }
                             break;
                     }
                  }
