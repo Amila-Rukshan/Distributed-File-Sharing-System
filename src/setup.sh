@@ -12,7 +12,7 @@ do
   for j in $(seq 0 2)
   do
     NEW_UUID=$(cat /dev/urandom | tr -dc 'a-z0-9' | fold -w 32 | head -n 1);
-    xterm -geometry "74x10+$((450*j))+$((28+165*i))" -e "javac Peer.java; java Peer $port $NEW_UUID" &
+    xterm -geometry "74x10+$((8+450*j))+$((28+165*i))" -e "javac Peer.java; java Peer $port $NEW_UUID" &
     port=$((port+1));
     sleep 1
   done
