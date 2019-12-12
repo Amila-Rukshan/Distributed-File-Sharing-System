@@ -1,5 +1,6 @@
 # selects three random unique ports and query the whole list of queries one by one
 random_unique_ports=($(shuf -i 57000-57011 -n 3 | sort -n))
+hop_count=3
 
 for random_port in "${random_unique_ports[@]}"; do
     echo "READY TO QUERY THE NODE: 127.0.1.1:$random_port"
@@ -8,9 +9,17 @@ for random_port in "${random_unique_ports[@]}"; do
     while IFS= read -r p; do
         echo "SEARCHING : \"$p\""
         read -p "" -n1 -s < /dev/tty
-        echo -n "0047 SER 127.0.1.1 $random_port \"$p\" 3" | nc -u 127.0.1.1 $random_port
+        query="SER 127.0.1.1 $random_port \"$p\" $hop_count"
+        # set the message length
+        query="$(printf '%04d' $((${#query}+5))) $query"
+        echo -n "$query" | nc -u 127.0.1.1 $random_port &
     done <Queries
 done
+
+
+
+
+
 
 
 
