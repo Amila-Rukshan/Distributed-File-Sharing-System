@@ -8,7 +8,13 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.sql.Time;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class BootstrapServer {
@@ -150,17 +156,28 @@ public class BootstrapServer {
                             int file_count = Integer.parseInt(st.nextToken());
                             ipInCmd = st.nextToken();
                             portInCmd = st.nextToken();
+
+                            String hops = "";
+                            String searchQuery = "";
                             for(int k = 0; k < file_count; k++){
                                 String next = st.nextToken();
-                                String searchQuery = next;
+                                searchQuery = next;
                                 while(next.charAt(next.length()-1) != '"'){
                                     next = st.nextToken();
                                     searchQuery += " " + next;
                                 }
 //                                secureSock
 //                                downloadMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
-
+                                hops = st.nextToken();
                             }
+
+                            try {
+                                String text = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + " RES : " + ipInCmd + " " + portInCmd + " " + hops + " " + searchQuery + "\n";
+                                Files.write(Paths.get("./log.txt"), text.getBytes(), StandardOpenOption.APPEND);
+                            }catch (IOException e) {
+                                //exception handling left as an exercise for the reader
+                            }
+
                             break;
                         case "DOWNLOAD_TRIGGER":
                             ipInCmd = st.nextToken();

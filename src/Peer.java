@@ -7,6 +7,12 @@
 
 import java.io.*;
 import java.net.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.security.MessageDigest;
 
@@ -16,6 +22,10 @@ public class Peer{
 
     public static ServerSocket server = null;
 
+    public static int ser_msg_count = 0;
+
+    static String username;
+
     public static void main(String args[]){
         DatagramSocket sock = null;
 
@@ -23,6 +33,7 @@ public class Peer{
         List<Node> peerTable = new ArrayList<Node>();
 
         assignedFiles = new ArrayList<>();
+
 
         String[] possilbeFiles = {"Adventures of Tintin", "Jack and Jill", "Glee", "The Vampire Diarie", "King Arthur",
                 "Windows XP", "Harry Potter", "Kung Fu Panda", "Lady Gaga", "Twilight", "Windows 8", "Mission Impossible",
@@ -34,7 +45,7 @@ public class Peer{
             int port = Integer.parseInt(args[0]);
 
             // username of the peer
-            String username = args[1];
+            username = args[1];
 
             InetAddress ip = InetAddress.getLocalHost();
             InetAddress bsIP = InetAddress.getByName("127.0.1.1");
@@ -169,6 +180,7 @@ public class Peer{
 //                            echo("LEAVEOK " + st.nextToken());
                             break;
                         case "SER":
+                            ser_msg_count++;
                             String ipInCmd = st.nextToken();
                             String portInCmd = st.nextToken();
                             String next = st.nextToken();
@@ -201,6 +213,7 @@ public class Peer{
                                     for(String file : arr){
                                         serReply += " " + "\"" + file + "\"";
                                     }
+                                    serReply += " " + (3-hops);
                                     serReply = String.format("%04d", serReply.length() + 5) + " " + serReply;
                                     sock.send(new DatagramPacket(serReply.getBytes(), serReply.getBytes().length, bsIP, bsPort));
                                 }
@@ -276,6 +289,14 @@ public class Peer{
                                 sock.send(new DatagramPacket(download_ok_msg.getBytes(), download_ok_msg.getBytes().length, bsIP, bsPort));
                             }else{
                                 echo("FILE NOT FOUND");
+                            }
+                            break;
+                        case "SAVE_LOG":
+                            try {
+                                String text = "SER_COUNT " + ser_msg_count + "\n";
+                                Files.write(Paths.get("./node_" + username + ".txt"), text.getBytes(), StandardOpenOption.APPEND);
+                            }catch (IOException e) {
+                                //exception handling left as an exercise for the reader
                             }
                             break;
                     }
