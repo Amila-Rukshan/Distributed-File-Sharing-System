@@ -24,13 +24,16 @@ public class Peer{
 
     public static int ser_msg_count = 0;
 
+    static List<Node> peerTable;
+
     static String username;
 
     public static void main(String args[]){
         DatagramSocket sock = null;
 
         String s;
-        List<Node> peerTable = new ArrayList<Node>();
+
+        peerTable = new ArrayList<Node>();
 
         assignedFiles = new ArrayList<>();
 
@@ -278,7 +281,6 @@ public class Peer{
                                     }
                                 };
 
-
                                 t.start();
                                 Thread.sleep(1000);
 
@@ -293,8 +295,11 @@ public class Peer{
                             break;
                         case "SAVE_LOG":
                             try {
-                                String text = "SER_COUNT " + ser_msg_count + "\n";
-                                Files.write(Paths.get("./node_" + username + ".txt"), text.getBytes(), StandardOpenOption.APPEND);
+                                File tempfile = new File("./node_" + Peer.username + ".txt");
+                                tempfile.createNewFile();
+                                String text = "SER_MSG_CNT : " + ser_msg_count + "\n" + "NODE_DEGREE : " + peerTable.size() + "\n" ;
+
+                                Files.write(Paths.get("./node_" + Peer.username + ".txt"), text.getBytes(), StandardOpenOption.APPEND);
                             }catch (IOException e) {
                                 //exception handling left as an exercise for the reader
                             }

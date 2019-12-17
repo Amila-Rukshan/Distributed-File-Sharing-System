@@ -170,10 +170,9 @@ public class BootstrapServer {
 //                                downloadMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
                                 hops = st.nextToken();
                             }
-
                             try {
                                 String text = LocalDateTime.now().format(DateTimeFormatter.ofPattern("HH:mm:ss")) + " RES : " + ipInCmd + " " + portInCmd + " " + hops + " " + searchQuery + "\n";
-                                Files.write(Paths.get("./log.txt"), text.getBytes(), StandardOpenOption.APPEND);
+                                Files.write(Paths.get("./query_log.txt"), text.getBytes(), StandardOpenOption.APPEND);
                             }catch (IOException e) {
                                 //exception handling left as an exercise for the reader
                             }

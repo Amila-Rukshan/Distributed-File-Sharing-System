@@ -1,5 +1,5 @@
 #remove previous log file
-rm ./query_log_*.txt
+rm ./query_log.txt ./node_*.txt
 
 #start bootstrap server
 kill $(lsof -t -i:55555);
