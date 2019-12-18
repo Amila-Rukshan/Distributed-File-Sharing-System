@@ -24,9 +24,15 @@ public class Peer{
 
     public static int ser_msg_count = 0;
 
+    public static int fwd_msg_count = 0;
+
+    public static int ans_msg_count = 0;
+
     static List<Node> peerTable;
 
     static String username;
+
+    static int port;
 
     public static void main(String args[]){
         DatagramSocket sock = null;
@@ -45,7 +51,7 @@ public class Peer{
 
         try{
             // port of the peer
-            int port = Integer.parseInt(args[0]);
+            port = Integer.parseInt(args[0]);
 
             // username of the peer
             username = args[1];
@@ -203,7 +209,8 @@ public class Peer{
                                 if(arr.size() == 0){
                                     for(int j = 0; j < peerTable.size(); j++){
                                         // search except the incoming node
-                                        if(peerTable.get(j).getIp() != incoming.getAddress().getHostName() && peerTable.get(j).getPort() != incoming.getPort()){
+                                        if(peerTable.get(j).getIp() != incoming.getAddress().getHostName() && peerTable.get(j).getPort() != incoming.getPort() && hops > 0){
+                                            fwd_msg_count++;
                                             String searchMsg = "SER " + peerTable.get(j).getIp() + " " + peerTable.get(j).getPort() + " \"" + searchQuery + "\" " + hops;
                                             searchMsg = String.format("%04d", searchMsg.length() + 5) + " " + searchMsg;
                                             echo(searchMsg);
@@ -212,6 +219,7 @@ public class Peer{
                                         }
                                     }
                                 }else if(arr.size() > 0){
+                                    ans_msg_count++;
                                     String serReply = "SEROK " + arr.size() + " " + ip.getHostAddress() + " " + port;
                                     for(String file : arr){
                                         serReply += " " + "\"" + file + "\"";
@@ -295,11 +303,14 @@ public class Peer{
                             break;
                         case "SAVE_LOG":
                             try {
-                                File tempfile = new File("./node_" + Peer.username + ".txt");
+                                File tempfile = new File("./node_" + Peer.port + ".txt");
                                 tempfile.createNewFile();
-                                String text = "SER_MSG_CNT : " + ser_msg_count + "\n" + "NODE_DEGREE : " + peerTable.size() + "\n" ;
+                                String text = "SER_MSG_CNT : " + ser_msg_count + "\n" +
+                                              "FWD_MSG_CNT : " + fwd_msg_count + "\n" +
+                                              "ANS_MSG_CNT : " + ans_msg_count + "\n" +
+                                              "NODE_DEGREE : " + peerTable.size() + "\n" ;
 
-                                Files.write(Paths.get("./node_" + Peer.username + ".txt"), text.getBytes(), StandardOpenOption.APPEND);
+                                Files.write(Paths.get("./node_" + Peer.port + ".txt"), text.getBytes(), StandardOpenOption.APPEND);
                             }catch (IOException e) {
                                 //exception handling left as an exercise for the reader
                             }
