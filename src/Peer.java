@@ -337,11 +337,19 @@ public class Peer{
     public static ArrayList<String> search(String query){
         ArrayList<String> arr = new ArrayList();
         for(String s : assignedFiles){
-            String[] tokens = s.split("\\s");
+            String[] tokens = s.toLowerCase().split("\\s");
+
+            String[] q_tokens = query.toLowerCase().split("\\s");
+            boolean b = false;
             for(String t : tokens){
-                if(query.equals(t.toLowerCase())){
-                    arr.add(s);
+                for(String tk: q_tokens){
+                    if(t.equals(tk)){
+                        b = true;
+                    }
                 }
+            }
+            if(b){
+                arr.add(s);
             }
         }
         return arr;

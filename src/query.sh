@@ -3,6 +3,10 @@ random_unique_ports=($(shuf -i 57000-57011 -n 3 | sort -n))
 hop_count=3
 
 for random_port in "${random_unique_ports[@]}"; do
+  echo "$random_port"
+done
+
+for random_port in "${random_unique_ports[@]}"; do
     echo "READY TO QUERY THE NODE: 127.0.1.1:$random_port"
     read -p "Press any key to trigger the first query:" -n1 -s < /dev/tty
     echo ""   # new line

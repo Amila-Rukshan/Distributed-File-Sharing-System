@@ -33,13 +33,14 @@ node_degree = []
 msg_per_node = []
 
 for i in range(57000, 57012):
-    file = open('./node_' + str(i) + '.txt', 'r')
-    x = file.readline().replace('\n', '')
-    msg_per_node.append(int(x.split(" ")[2]))
-    file.readline()
-    file.readline()
-    x = file.readline().replace('\n', '')
-    node_degree.append(int(x.split(" ")[2]))
+    if i != 57002 and i != 57005:
+        file = open('./node_' + str(i) + '.txt', 'r')
+        x = file.readline().replace('\n', '')
+        msg_per_node.append(int(x.split(" ")[2]))
+        file.readline()
+        file.readline()
+        x = file.readline().replace('\n', '')
+        node_degree.append(int(x.split(" ")[2]))
 
 plt_cdf(node_degree, "CDF of node degree")
 plt_cdf(msg_per_node, "CDF of messages per node")
