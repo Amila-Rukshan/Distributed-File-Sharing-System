@@ -3,6 +3,8 @@ we have simplified the run commands using shell/bash scripts
     1) nc       - to send udp messages from terminal
     2) xterm    - to open multiple peer nodes in multiple terminals
 
+first go to "src" directory and run following scripts
+
 ./setup.sh                    // this will first start the Bootstrap Server (port 55555) and
                               // then start 12 peer nodes (57000 - 57011)
 
