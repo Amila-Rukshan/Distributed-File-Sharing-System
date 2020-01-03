@@ -87,9 +87,17 @@ Ex: 0010 ERROR
     length  – Length of the entire message including 4 characters used to indicate the length. In xxxx format.
     ERROR   – Generic error message, to indicate that a given command is not understood. For storing and searching files/keys this should be send to the initiator of the message.
 
-
-
-
+#### Stats of the distibuted content searching system
+    1) find the number of query messages received, forwarded, and answered by all 10+ nodes
+        i)  before removing two nodes
+        ii) after removing two nodes
+    2) Find min, max, average, and standard deviation of,
+        a) hops
+        b) latency
+        c) messages per node
+        d) node degree
+    3) Find per query cost and per node cost.
+    4) Plot distribution (CDF) of hops, latency, messages per node, and node degree.
 
 
 

@@ -4,6 +4,7 @@
  *
  */
 
+import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -208,7 +209,12 @@ public class BootstrapServer {
                             }
 
                             InputStream is = sr.getInputStream();
-                            byte[] bytes = new byte[10*1024*1024];
+                            ByteArrayOutputStream os = new ByteArrayOutputStream();
+                            int b;
+                            while ((b = is.read()) != -1)
+                                os.write(b);
+
+                            byte[] bytes = os.toByteArray(); //new byte[10*1024*1024];
                             FileOutputStream fr = new FileOutputStream("./receive_" + name2.substring(1, name2.length()-1) + "_" + new Date().getTime() + ".mp3");
 
                             is.read(bytes, 0, bytes.length);
